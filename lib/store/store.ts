@@ -27,7 +27,7 @@ const makeStore = () => {
   return store;
 };
 
-export const wrapper = createWrapper<RootState>(makeStore);
-
+export const wrapper = createWrapper<RootStore>(makeStore);
+export type RootStore = ReturnType<typeof makeStore>;
 export type RootState = CombinedReducerState;
 export type AppDispatch = typeof store.dispatch;

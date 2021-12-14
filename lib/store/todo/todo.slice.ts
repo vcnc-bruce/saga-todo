@@ -1,17 +1,8 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../store";
-
-export interface Task {
-  completed: boolean;
-  _id: string;
-  description: string;
-  owner: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
+import { TodoTask } from "../../api/addTask";
 interface TodoSliceState {
-  list: Task[];
+  list: TodoTask[];
 }
 
 export const initialState = (): TodoSliceState => {
@@ -24,12 +15,19 @@ const todoSlice = createSlice({
   initialState: initialState(),
   name: "todo",
   reducers: {
-    requestAddTodo: () => {
-      console.log("reaaaaaa");
+    requestAddTodo: (
+      state,
+      action: PayloadAction<{ description: string }>
+    ) => {},
+    requestDeleteTodo: (state, action: PayloadAction<{ todoId: string }>) => {},
+    add: (state, action: PayloadAction<{ task: TodoTask }>) => {
+      state.list.push(action.payload.task);
     },
-    requestDeleteTodo: () => {},
-    add: () => {},
-    delete: () => {},
+    delete: (state, action: PayloadAction<{ todoId: string }>) => {
+      state.list = state.list.filter(
+        (item) => item._id !== action.payload.todoId
+      );
+    },
   },
 });
 

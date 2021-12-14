@@ -9,25 +9,24 @@ export interface TodoTask {
   updatedAt: string;
 }
 
-export interface AddTaskInterface {
-  data?: TodoTask;
+export interface DeleteTaskInterface {
+  data?: any;
   errors?: any;
 }
 
-export default async function addTask(task: string): Promise<AddTaskInterface> {
+export default async function deleteTask(
+  id: string
+): Promise<DeleteTaskInterface> {
   const myHeaders = new Headers();
   myHeaders.append("Authorization", `Bearer ${constants.token}`);
   myHeaders.append("Content-Type", "application/json");
 
   const requestOptions = {
-    method: "POST",
+    method: "DELETE",
     headers: myHeaders,
-    body: JSON.stringify({
-      description: task,
-    }),
   };
 
-  const response = await fetch(`${constants.url}/task`, requestOptions);
+  const response = await fetch(`${constants.url}/task/${id}`, requestOptions);
   const { data, errors } = await response.json();
   return { data, errors };
 }
