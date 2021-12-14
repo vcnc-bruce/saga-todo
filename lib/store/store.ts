@@ -2,7 +2,7 @@ import { Store } from "redux";
 import { configureStore, EnhancedStore } from "@reduxjs/toolkit";
 import { createWrapper } from "next-redux-wrapper";
 import createSagaMiddleware, { Task } from "redux-saga";
-import rootReducer from "./root.reducer";
+import rootReducer, { CombinedReducerState } from "./root.reducer";
 import rootSaga from "./root.saga";
 
 export interface SagaStore extends Store {
@@ -27,7 +27,7 @@ const makeStore = () => {
   return store;
 };
 
-export type RootState = ReturnType<typeof store.getState>;
-export type AppDispatch = typeof store.dispatch;
-
 export const wrapper = createWrapper<RootState>(makeStore);
+
+export type RootState = CombinedReducerState;
+export type AppDispatch = typeof store.dispatch;
