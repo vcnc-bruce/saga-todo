@@ -13,6 +13,7 @@ export default function TodoForm() {
   };
   const onAddButtonClick = () => {
     dispatch(todoActions.requestAddTodo({ description: input }));
+    setInput("");
   };
   return (
     <div>
