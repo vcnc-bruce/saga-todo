@@ -35,8 +35,9 @@ function* successFetchAddTask(action: PayloadAction<IResultAddTodo>) {
     case popupActions.onDenyButtonClick.type:
     default:
       yield put(todoActions.failureAddTodo());
-      // TODO: delete 요청 보내기
-      console.log("delte 요청");
+      yield put(
+        todoActions.requestDeleteTodo({ todoId: action.payload.task._id })
+      );
   }
 }
 
