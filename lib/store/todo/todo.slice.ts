@@ -1,6 +1,19 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../store";
 import { TodoTask } from "../../api/addTask";
+
+export interface IRequestAddTodo {
+  description: string;
+}
+
+export interface IResultAddTodo {
+  task: TodoTask;
+}
+
+export interface IRequestDeleteTodo {
+  todoId: string;
+}
+
 interface TodoSliceState {
   list: TodoTask[];
 }
@@ -15,15 +28,14 @@ const todoSlice = createSlice({
   initialState: initialState(),
   name: "todo",
   reducers: {
-    requestAddTodo: (
-      state,
-      action: PayloadAction<{ description: string }>
-    ) => {},
-    requestDeleteTodo: (state, action: PayloadAction<{ todoId: string }>) => {},
-    add: (state, action: PayloadAction<{ task: TodoTask }>) => {
+    requestAddTodo: (state, action: PayloadAction<IRequestAddTodo>) => {},
+    successAddTodo: (state, action: PayloadAction<IResultAddTodo>) => {},
+    failureAddTodo: () => {},
+    addTodo: (state, action: PayloadAction<IResultAddTodo>) => {
       state.list.push(action.payload.task);
     },
-    delete: (state, action: PayloadAction<{ todoId: string }>) => {
+    requestDeleteTodo: (state, action: PayloadAction<IRequestDeleteTodo>) => {},
+    delete: (state, action: PayloadAction<IRequestDeleteTodo>) => {
       state.list = state.list.filter(
         (item) => item._id !== action.payload.todoId
       );

@@ -1,27 +1,30 @@
-import { call, put, take } from "@redux-saga/core/effects";
+import { call, put, take, fork } from "@redux-saga/core/effects";
+import { PayloadAction } from "@reduxjs/toolkit";
 import deleteTask, { DeleteTaskInterface } from "../../../api/deleteTask";
-import { todoActions } from "../todo.slice";
+import { IRequestDeleteTodo, todoActions } from "../todo.slice";
 
-function* fetchDeleteTask(todoId: string) {
-  const { data, errors }: DeleteTaskInterface = yield call(deleteTask, todoId);
+function* fetchDeleteTask(action: PayloadAction<IRequestDeleteTodo>) {
+  const { data, errors }: DeleteTaskInterface = yield call(
+    deleteTask,
+    action.payload.todoId
+  );
 
   if (errors) {
-    console.log("deleteTask");
-    console.error(errors);
+    console.error("deleteTask Error");
     return;
   }
 
   if (data) {
-    yield put(todoActions.delete({ todoId }));
+    yield put(todoActions.delete(action.payload));
   }
 }
 
 function* watchFetchDeleteTask() {
   while (true) {
-    const {
-      payload: { todoId },
-    } = yield take(todoActions.requestDeleteTodo);
-    yield fetchDeleteTask(todoId);
+    const action: PayloadAction<IRequestDeleteTodo> = yield take(
+      todoActions.requestDeleteTodo.type
+    );
+    yield fork(fetchDeleteTask, action);
   }
 }
 
