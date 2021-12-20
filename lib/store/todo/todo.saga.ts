@@ -1,4 +1,4 @@
-import watchFetchAddTask from "./sagas/add.saga";
-import watchFetchDeleteTask from "./sagas/delete.saga";
+import flowAddSaga from "./sagas/add.saga";
+import flowDeleteSaga from "./sagas/delete.saga";
 
-export default [watchFetchAddTask, watchFetchDeleteTask];
+export default [flowAddSaga, flowDeleteSaga];

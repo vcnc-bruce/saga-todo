@@ -6,7 +6,7 @@ import { popupActions } from "../../popup/popup.slice";
 import { IRequestAddTodo, IResultAddTodo, todoActions } from "../todo.slice";
 
 // 가능해보이는것 받아오는 함수를 만드는 factory 함수도 만들 수 있지않나?
-function* failureFetchAddTask(action: PayloadAction<IRequestAddTodo>) {
+function* failureFetchAddSaga(action: PayloadAction<IRequestAddTodo>) {
   const { type } = yield take([
     popupActions.onApproveButtonClick.type,
     popupActions.onDenyButtonClick.type,
@@ -22,7 +22,7 @@ function* failureFetchAddTask(action: PayloadAction<IRequestAddTodo>) {
   }
 }
 
-function* successFetchAddTask(action: PayloadAction<IResultAddTodo>) {
+function* successFetchAddSaga(action: PayloadAction<IResultAddTodo>) {
   const { type } = yield take([
     popupActions.onApproveButtonClick.type,
     popupActions.onDenyButtonClick.type,
@@ -56,7 +56,7 @@ function* fetchAddTask(action: PayloadAction<IRequestAddTodo>) {
   }
 }
 
-function* watchFetchAddTask() {
+function* flowAddSaga() {
   while (true) {
     const apiRequestAction: PayloadAction<IRequestAddTodo> = yield take(
       todoActions.requestAddTodo.type
@@ -71,7 +71,7 @@ function* watchFetchAddTask() {
     switch (apiResultAction.type) {
       case todoActions.successAddTodo.type:
         yield fork(
-          withPopupSaga(successFetchAddTask, {
+          withPopupSaga(successFetchAddSaga, {
             question: "정말 추가하시겠습니까",
           }),
           apiResultAction
@@ -79,7 +79,7 @@ function* watchFetchAddTask() {
         break;
       case todoActions.failureAddTodo.type:
         yield fork(
-          withPopupSaga(failureFetchAddTask, {
+          withPopupSaga(failureFetchAddSaga, {
             question: "다시 시도하시겠습니까",
           }),
           apiRequestAction
@@ -92,4 +92,4 @@ function* watchFetchAddTask() {
   }
 }
 
-export default watchFetchAddTask;
+export default flowAddSaga;

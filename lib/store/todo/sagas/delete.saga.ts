@@ -27,7 +27,7 @@ function* fetchDeleteTask(action: PayloadAction<IRequestDeleteTodo>) {
   }
 }
 
-function* watchFetchDeleteTask() {
+function* flowDeleteSaga() {
   while (true) {
     const apiRequestAction: PayloadAction<IRequestDeleteTodo> = yield take(
       todoActions.requestDeleteTodo.type
@@ -52,4 +52,4 @@ function* watchFetchDeleteTask() {
   }
 }
 
-export default watchFetchDeleteTask;
+export default flowDeleteSaga;
