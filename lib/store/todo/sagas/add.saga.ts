@@ -18,7 +18,7 @@ function* failureFetchAddSaga(action: PayloadAction<IRequestAddTodo>) {
       break;
     case popupActions.onDenyButtonClick.type:
     default:
-      yield put(todoActions.failureAddTodo());
+    // do nothing since we can track what happen
   }
 }
 
@@ -34,7 +34,6 @@ function* successFetchAddSaga(action: PayloadAction<IResultAddTodo>) {
       break;
     case popupActions.onDenyButtonClick.type:
     default:
-      yield put(todoActions.failureAddTodo());
       yield put(
         todoActions.requestDeleteTodo({ todoId: action.payload.task._id })
       );
