@@ -1,94 +1,83 @@
-import { call, put, take, fork, takeEvery } from "@redux-saga/core/effects";
+import { call, put, take, fork } from "@redux-saga/core/effects";
 import { PayloadAction } from "@reduxjs/toolkit";
 import addTask, { AddTaskInterface, TodoTask } from "../../../api/addTask";
-import withPopupSaga from "../../popup/popup.saga";
+import popupSaga from "../../popup/popup.saga";
 import { popupActions } from "../../popup/popup.slice";
 import { IRequestAddTodo, IResultAddTodo, todoActions } from "../todo.slice";
 
-// 가능해보이는것 받아오는 함수를 만드는 factory 함수도 만들 수 있지않나?
 function* failureFetchAddSaga(action: PayloadAction<IRequestAddTodo>) {
-  const { type } = yield take([
-    popupActions.onApproveButtonClick.type,
-    popupActions.onDenyButtonClick.type,
-  ]);
+  const popupResultAction: PayloadAction = yield call(popupSaga, {
+    question: "다시 시도하시겠습니까",
+  });
 
-  switch (type) {
+  switch (popupResultAction.type) {
     case popupActions.onApproveButtonClick.type:
       yield put(todoActions.requestAddTodo(action.payload));
       break;
     case popupActions.onDenyButtonClick.type:
     default:
-    // do nothing since we can track what happen
+    // do nothing
   }
+
+  // 새로 reuqest한다고해도 하나의 add 플로우는 끝났기에 end를 put한다
+  yield put(todoActions.endAddTodo());
 }
 
 function* successFetchAddSaga(action: PayloadAction<IResultAddTodo>) {
-  const { type } = yield take([
-    popupActions.onApproveButtonClick.type,
-    popupActions.onDenyButtonClick.type,
-  ]);
+  const popupResultAction: PayloadAction = yield call(popupSaga, {
+    question: "정말 추가하시겠습니까",
+  });
 
-  switch (type) {
+  switch (popupResultAction.type) {
     case popupActions.onApproveButtonClick.type:
       yield put(todoActions.addTodo(action.payload));
+      yield put(todoActions.endAddTodo());
       break;
     case popupActions.onDenyButtonClick.type:
     default:
+      // TODO: 이 부분을 사가를 그냥 call할지 아니면
+      // 그래도 deleteRequest를 해야할지 고민 좀해보고 end를 꽂을지도 고민해봐야함
       yield put(
         todoActions.requestDeleteTodo({ todoId: action.payload.task._id })
       );
   }
 }
 
-function* fetchAddTask(action: PayloadAction<IRequestAddTodo>) {
-  const { data, errors }: AddTaskInterface = yield call(
-    addTask,
-    action.payload.description
-  );
-
-  if (errors) {
-    yield put(todoActions.failureAddTodo());
-  }
-
-  if (data) {
-    yield put(todoActions.successAddTodo({ task: data }));
+function* fetchAddSaga(action: PayloadAction<IRequestAddTodo>) {
+  try {
+    const { data: task }: AddTaskInterface = yield call(
+      addTask,
+      action.payload.description
+    );
+    yield put(todoActions.successFetchAddTodo({ task }));
+  } catch (error) {
+    yield put(todoActions.failedFetchAddTodo());
   }
 }
 
-function* flowAddSaga() {
+function* watchAddSaga() {
   while (true) {
     const apiRequestAction: PayloadAction<IRequestAddTodo> = yield take(
       todoActions.requestAddTodo.type
     );
-    yield fork(fetchAddTask, apiRequestAction);
+    yield fork(fetchAddSaga, apiRequestAction);
 
-    const apiResultAction: PayloadAction = yield take([
-      todoActions.successAddTodo.type,
-      todoActions.failureAddTodo.type,
+    const apiResultAction: PayloadAction<IResultAddTodo> = yield take([
+      todoActions.successFetchAddTodo.type,
+      todoActions.failedFetchAddTodo.type,
     ]);
 
     switch (apiResultAction.type) {
-      case todoActions.successAddTodo.type:
-        yield fork(
-          withPopupSaga(successFetchAddSaga, {
-            question: "정말 추가하시겠습니까",
-          }),
-          apiResultAction
-        );
+      case todoActions.successFetchAddTodo.type:
+        yield fork(successFetchAddSaga, apiResultAction);
         break;
-      case todoActions.failureAddTodo.type:
-        yield fork(
-          withPopupSaga(failureFetchAddSaga, {
-            question: "다시 시도하시겠습니까",
-          }),
-          apiRequestAction
-        );
+      case todoActions.failedFetchAddTodo.type:
+        yield fork(failureFetchAddSaga, apiRequestAction);
         break;
       default:
-        // TODO: 수정
         throw new Error("ddddd");
     }
   }
 }
 
-export default flowAddSaga;
+export default watchAddSaga;

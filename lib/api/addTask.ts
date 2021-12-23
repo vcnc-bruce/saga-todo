@@ -10,33 +10,28 @@ export interface TodoTask {
 }
 
 export interface AddTaskInterface {
-  data?: TodoTask;
-  errors?: any;
+  data: TodoTask;
 }
 
 export default async function addTask(task: string): Promise<AddTaskInterface> {
-  try {
-    const myHeaders = new Headers();
-    myHeaders.append("Authorization", `Bearer ${constants.token}`);
-    myHeaders.append("Content-Type", "application/json");
+  const myHeaders = new Headers();
+  myHeaders.append("Authorization", `Bearer ${constants.token}`);
+  myHeaders.append("Content-Type", "application/json");
 
-    const requestOptions = {
-      method: "POST",
-      headers: myHeaders,
-      body: JSON.stringify({
-        description: task,
-      }),
-    };
+  const requestOptions = {
+    method: "POST",
+    headers: myHeaders,
+    body: JSON.stringify({
+      description: task,
+    }),
+  };
 
-    const response = await fetch(`${constants.url}/task`, requestOptions);
+  const response = await fetch(`${constants.url}/task`, requestOptions);
 
-    if (!response.ok) {
-      throw new Error(response.statusText);
-    }
-
-    const { data } = await response.json();
-    return { data };
-  } catch (errors) {
-    return { errors };
+  if (!response.ok) {
+    throw new Error(response.statusText);
   }
+
+  const { data } = await response.json();
+  return { data };
 }

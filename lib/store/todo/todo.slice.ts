@@ -28,9 +28,10 @@ const todoSlice = createSlice({
   initialState: initialState(),
   name: "todo",
   reducers: {
+    endAddTodo: () => {},
     requestAddTodo: (state, action: PayloadAction<IRequestAddTodo>) => {},
-    successAddTodo: (state, action: PayloadAction<IResultAddTodo>) => {},
-    failureAddTodo: () => {},
+    successFetchAddTodo: (state, action: PayloadAction<IResultAddTodo>) => {},
+    failedFetchAddTodo: () => {},
     addTodo: (state, action: PayloadAction<IResultAddTodo>) => {
       state.list.push(action.payload.task);
     },
