@@ -41,6 +41,8 @@ function* successFetchAddSaga(action: PayloadAction<IResultAddTodo>) {
         todoActions.requestDeleteTodo({ todoId: action.payload.task._id })
       );
   }
+
+  yield put(todoActions.endAddTodo());
 }
 
 function* fetchAddSaga(action: PayloadAction<IRequestAddTodo>) {

@@ -35,10 +35,10 @@ const todoSlice = createSlice({
     addTodo: (state, action: PayloadAction<IResultAddTodo>) => {
       state.list.push(action.payload.task);
     },
+    endDeleteTodo: () => {},
     requestDeleteTodo: (state, action: PayloadAction<IRequestDeleteTodo>) => {},
-    successDeleteTodo: (state, action: PayloadAction<IRequestDeleteTodo>) => {},
-    failureDeleteTodo: () => {},
-    delete: (state, action: PayloadAction<IRequestDeleteTodo>) => {
+    failedFetchDeleteTodo: () => {},
+    deleteTodo: (state, action: PayloadAction<IRequestDeleteTodo>) => {
       state.list = state.list.filter(
         (item) => item._id !== action.payload.todoId
       );
