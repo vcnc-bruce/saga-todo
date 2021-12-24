@@ -12,7 +12,7 @@ export default function TodoForm() {
     setInput(value);
   };
   const onAddButtonClick = () => {
-    dispatch(todoActions.requestAddTodo({ description: input }));
+    dispatch(todoActions.requestFlowAddTodo({ contents: input }));
     setInput("");
   };
   return (

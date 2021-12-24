@@ -1,85 +1,90 @@
-import { call, put, take, fork } from "@redux-saga/core/effects";
-import { PayloadAction } from "@reduxjs/toolkit";
-import addTask, { AddTaskInterface, TodoTask } from "../../../api/addTask";
-import popupSaga from "../../popup/popup.saga";
-import { popupActions } from "../../popup/popup.slice";
-import { IRequestAddTodo, IResultAddTodo, todoActions } from "../todo.slice";
+import {call, put, take, fork, takeEvery, takeLeading} from "@redux-saga/core/effects";
+import {PayloadAction} from "@reduxjs/toolkit";
+import addTask, {AddTaskInterface} from "../../../api/addTask";
+import {popupActions} from "../../popup/popup.slice";
+import {IRequestAddTodoPayload, ITodo, todoActions} from "../todo.slice";
 
-function* failureFetchAddSaga(action: PayloadAction<IRequestAddTodo>) {
-  const popupResultAction: PayloadAction = yield call(popupSaga, {
-    question: "다시 시도하시겠습니까",
-  });
-
-  switch (popupResultAction.type) {
-    case popupActions.onApproveButtonClick.type:
-      yield put(todoActions.requestAddTodo(action.payload));
-      break;
-    case popupActions.onDenyButtonClick.type:
-    default:
-    // do nothing
-  }
-
-  // 새로 reuqest한다고해도 하나의 add 플로우는 끝났기에 end를 put한다
-  yield put(todoActions.endAddTodo());
+function* fetchAddSaga(action: PayloadAction<IRequestAddTodoPayload>) {
+	try {
+		const {data: task}: AddTaskInterface = yield call(
+			addTask,
+			action.payload.description
+		);
+		yield put(todoActions.successFetchAddTodo({task}));
+	} catch (error) {
+		yield put(todoActions.failureFetchAddTodo());
+	}
 }
 
-function* successFetchAddSaga(action: PayloadAction<IResultAddTodo>) {
-  const popupResultAction: PayloadAction = yield call(popupSaga, {
-    question: "정말 추가하시겠습니까",
-  });
+function* flowSuccessAdd(action: PayloadAction<ITodo>) {
+	yield put(todoActions.beginAfterSuccessfulAddTodoFetch());
+	yield put(popupActions.setContents({contents: '정말 추가하시겠습니까?'}));
+	yield put(popupActions.showPopup());
+	const userButtonClickAction: PayloadAction = yield take([popupActions.onConfirmButtonClick.type, popupActions.onDismissButtonClick.type]);
 
-  switch (popupResultAction.type) {
-    case popupActions.onApproveButtonClick.type:
-      yield put(todoActions.addTodo(action.payload));
-      yield put(todoActions.endAddTodo());
-      break;
-    case popupActions.onDenyButtonClick.type:
-    default:
-      // TODO: 이 부분을 사가를 그냥 call할지 아니면
-      // 그래도 deleteRequest를 해야할지 고민 좀해보고 end를 꽂을지도 고민해봐야함
-      yield put(
-        todoActions.requestDeleteTodo({ todoId: action.payload.task._id })
-      );
-  }
-
-  yield put(todoActions.endAddTodo());
+	switch (userButtonClickAction.type) {
+		case popupActions.onConfirmButtonClick.type:
+			yield put(todoActions.addTodo(action.payload));
+			yield put(todoActions.successAfterSuccessfulAddTodoFetch());
+			break;
+		case popupActions.onDismissButtonClick.type:
+			yield put(todoActions.failureAfterSuccessfulAddTodoFetch());
+			break;
+		default:
+			break;
+	}
 }
 
-function* fetchAddSaga(action: PayloadAction<IRequestAddTodo>) {
-  try {
-    const { data: task }: AddTaskInterface = yield call(
-      addTask,
-      action.payload.description
-    );
-    yield put(todoActions.successFetchAddTodo({ task }));
-  } catch (error) {
-    yield put(todoActions.failedFetchAddTodo());
-  }
+function* flowFailureAdd(action: PayloadAction<IRequestAddTodoPayload>) {
+	yield put(todoActions.beginAfterFailedAddTodoFetch());
+	yield put(popupActions.setContents({contents: '다시 시도하시겠습니까?'}));
+	const userButtonClickAction: PayloadAction = yield take([popupActions.onConfirmButtonClick.type, popupActions.onDismissButtonClick.type]);
+	switch (userButtonClickAction.type) {
+		case popupActions.onConfirmButtonClick.type:
+			yield put(todoActions.successAfterFailedAddTodoFetch());
+			break;
+		case popupActions.onDismissButtonClick.type:
+			yield put(todoActions.failureAfterFailedAddTodoFetch());
+			break;
+		default:
+			break;
+	}
 }
 
-function* watchAddSaga() {
-  while (true) {
-    const apiRequestAction: PayloadAction<IRequestAddTodo> = yield take(
-      todoActions.requestAddTodo.type
-    );
-    yield fork(fetchAddSaga, apiRequestAction);
+function* workAddSaga(action: PayloadAction<IRequestAddTodoPayload>) {
+	yield put(todoActions.beginFlowAddTodo());
+	yield fork(fetchAddSaga, action)
+	const fetchAddTodoAction: PayloadAction<ITodo> = yield take([todoActions.successFetchAddTodo.type, todoActions.failureFetchAddTodo.type]);
 
-    const apiResultAction: PayloadAction<IResultAddTodo> = yield take([
-      todoActions.successFetchAddTodo.type,
-      todoActions.failedFetchAddTodo.type,
-    ]);
-
-    switch (apiResultAction.type) {
-      case todoActions.successFetchAddTodo.type:
-        yield fork(successFetchAddSaga, apiResultAction);
-        break;
-      case todoActions.failedFetchAddTodo.type:
-        yield fork(failureFetchAddSaga, apiRequestAction);
-        break;
-      default:
-        throw new Error("ddddd");
-    }
-  }
+	switch (fetchAddTodoAction.type) {
+		case todoActions.successFetchAddTodo.type:
+			yield fork(flowSuccessAdd, fetchAddTodoAction);
+			yield take([todoActions.successAfterSuccessfulAddTodoFetch.type, todoActions.failureAfterSuccessfulAddTodoFetch.type]);
+			yield put(todoActions.successFlowAddTodo());
+			break;
+		case todoActions.failureFetchAddTodo.type:
+			yield fork(flowFailureAdd, action);
+			const successFlowFailureAddAction: PayloadAction = yield take(
+				[todoActions.successAfterFailedAddTodoFetch.type, todoActions.failureAfterSuccessfulAddTodoFetch.type]
+			);
+			if (successFlowFailureAddAction.type === todoActions.successAfterFailedAddTodoFetch.type) {
+				yield put(todoActions.failureFlowAddTodo({}));
+				yield put(todoActions.requestRetryFlowAddTodo(action.payload));
+			} else {
+				yield put(todoActions.failureFlowAddTodo({}));
+			}
+			break;
+		default:
+			break;
+	}
 }
 
-export default watchAddSaga;
+function* watchAddSaga(action: PayloadAction<IRequestAddTodoPayload>) {
+	yield takeLeading(todoActions.requestFlowAddTodo.type, workAddSaga);
+}
+
+function* watchRetryAddTodo(action: PayloadAction<IRequestAddTodoPayload>) {
+	yield takeEvery(todoActions.requestRetryFlowAddTodo.type, workAddSaga);
+}
+
+export default [watchAddSaga, watchRetryAddTodo];

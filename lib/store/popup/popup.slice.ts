@@ -3,17 +3,17 @@ import { RootState } from "../store";
 
 interface PopupSliceState {
   isVisible: boolean;
-  question: string;
+  contents: string;
 }
 
-export interface SetQuestionPayloadActionInterface {
-  question: string;
+export interface ISetContentsPayloadAction {
+	contents: string;
 }
 
 export const initialState = (): PopupSliceState => {
   return {
     isVisible: false,
-    question: "",
+		contents: "",
   };
 };
 
@@ -27,17 +27,17 @@ const popupSlice = createSlice({
     hidePopup: (state) => {
       state.isVisible = false;
     },
-    setQuestion: (
+    setContents: (
       state,
-      action: PayloadAction<SetQuestionPayloadActionInterface>
+      action: PayloadAction<ISetContentsPayloadAction>
     ) => {
-      state.question = action.payload.question;
+      state.contents = action.payload.contents;
     },
     clearQuestion: () => {
       return initialState();
     },
-    onApproveButtonClick: () => {},
-    onDenyButtonClick: () => {},
+    onConfirmButtonClick: () => {},
+    onDismissButtonClick: () => {},
   },
 });
 
@@ -49,4 +49,4 @@ export const popupReducer = popupSlice.reducer;
 
 // selector
 export const isPopupVisible = (root: RootState) => root.popup.isVisible;
-export const popupQuestion = (root: RootState) => root.popup.question;
+export const popupQuestion = (root: RootState) => root.popup.contents;

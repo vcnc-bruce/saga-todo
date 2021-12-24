@@ -1,6 +1,6 @@
 import { put, call, take } from "@redux-saga/core/effects";
 import { PayloadAction } from "@reduxjs/toolkit";
-import { popupActions, SetQuestionPayloadActionInterface } from "./popup.slice";
+import { popupActions, ISetContentsPayloadAction } from "./popup.slice";
 
 // function withPopupSaga<T, Fn extends (...args: any[]) => T>(
 //   saga: Fn,
@@ -24,7 +24,7 @@ import { popupActions, SetQuestionPayloadActionInterface } from "./popup.slice";
 
 // export default withPopupSaga;
 
-function* popupSaga(payload: SetQuestionPayloadActionInterface) {
+function* popupSaga(payload: ISetContentsPayloadAction) {
   try {
     yield put(popupActions.setQuestion(payload));
     yield put(popupActions.showPopup());
